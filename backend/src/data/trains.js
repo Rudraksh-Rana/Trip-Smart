@@ -164,6 +164,20 @@ const trainRoutes = [
     baseFare: 1250
   },
   {
+    trainNumber: '12628',
+    name: 'Karnataka Express',
+    type: 'SF',
+    from: { code: 'SBC', name: 'Bangalore City', city: 'BLR' },
+    to: { code: 'NDLS', name: 'New Delhi', city: 'DEL' },
+    distance: 2444,
+    duration: { hours: 34, minutes: 30 },
+    days: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+    departure: '18:20',
+    arrival: '04:50',
+    classes: ['1A', '2A', '3A', 'SL'],
+    baseFare: 1250
+  },
+  {
     trainNumber: '22691',
     name: 'Rajdhani Express',
     type: 'RAJ',
@@ -174,6 +188,20 @@ const trainRoutes = [
     days: ['Mon', 'Sat'],
     departure: '20:00',
     arrival: '05:45',
+    classes: ['1A', '2A', '3A'],
+    baseFare: 1400
+  },
+  {
+    trainNumber: '22692',
+    name: 'Rajdhani Express',
+    type: 'RAJ',
+    from: { code: 'NZM', name: 'Hazrat Nizamuddin', city: 'DEL' },
+    to: { code: 'SBC', name: 'Bangalore City', city: 'BLR' },
+    distance: 2367,
+    duration: { hours: 33, minutes: 0 },
+    days: ['Tue', 'Sun'],
+    departure: '21:25',
+    arrival: '06:25',
     classes: ['1A', '2A', '3A'],
     baseFare: 1400
   },
@@ -730,48 +758,61 @@ const searchTrains = (params) => {
   console.log(`\n🚂 Searching trains: ${from} → ${to} on ${date}`);
 
   // City name mappings for search
+  // Keywords match against station names in EXP-TRAINS.json (format: "STATION NAME - CODE")
   const cityNameMappings = {
-    'DEL': ['DELHI', 'NEW DELHI', 'NDLS', 'HAZRAT', 'NIZAMUDDIN'],
-    'BOM': ['MUMBAI', 'BOMBAY', 'CSTM', 'LTT', 'BCT', 'BANDRA', 'DADAR', 'LOKMANYA'],
-    'BLR': ['BANGALORE', 'BENGALURU', 'SBC', 'YPR', 'YESVANTPUR'],
-    'MAA': ['CHENNAI', 'MADRAS', 'MGR', 'CENTRAL'],
-    'CCU': ['KOLKATA', 'CALCUTTA', 'HOWRAH', 'HWH', 'SDAH', 'SEALDAH'],
-    'HYD': ['HYDERABAD', 'SECUNDERABAD', 'NAMPALLY'],
-    'JAI': ['JAIPUR', 'JP'],
-    'AGR': ['AGRA', 'CANTT'],
-    'GOI': ['GOA', 'MADGAON', 'MARGAO', 'VASCO', 'THIVIM'],
-    'VNS': ['VARANASI', 'BANARAS', 'BSB'],
-    'COK': ['KOCHI', 'COCHIN', 'ERNAKULAM', 'ERS'],
-    'ATR': ['AMRITSAR', 'ASR'],
+    'DEL': ['DELHI', 'NEW DELHI', 'NDLS', 'HAZRAT', 'NIZAMUDDIN', 'NZM', 'H NIZAMUDDIN'],
+    'BOM': ['MUMBAI', 'BOMBAY', 'CSMT', 'CSTM', 'LTT', 'LOKMANYATILAK', 'BCT', 'MMCT', 'BANDRA', 'BDTS', 'DADAR', 'LOKMANYA', 'C SHIVAJI'],
+    'BLR': ['BANGALORE', 'BENGALURU', 'SBC', 'KSR BANGALORE', 'YPR', 'YESVANTPUR', 'SMVT', 'SMVB', 'BANGALORE CY', 'BANGALORE CANT', 'BNCE'],
+    'MAA': ['CHENNAI', 'MADRAS', 'CHENNAI CENTRAL', 'CHENNAI EGMORE', 'MGR CHENNAI', 'TAMBARAM'],
+    'CCU': ['KOLKATA', 'CALCUTTA', 'HOWRAH', 'HWH', 'SDAH', 'SEALDAH', 'SHALIMAR', 'SHM'],
+    'HYD': ['HYDERABAD', 'SECUNDERABAD', 'SC ', 'NAMPALLY', 'KACHEGUDA', 'HYB'],
+    'JAI': ['JAIPUR', 'JAIPUR JN'],
+    'AGR': ['AGRA', 'AGRA CANTT', 'AGRA CITY', 'AGC', 'AF '],
+    'GOI': ['GOA', 'MADGAON', 'MARGAO', 'MAO', 'VASCO', 'THIVIM', 'TVW'],
+    'VNS': ['VARANASI', 'BANARAS', 'BSB', 'MANDUADIH', 'MUV'],
+    'COK': ['KOCHI', 'COCHIN', 'ERNAKULAM', 'ERS', 'ALUVA', 'AWY'],
+    'ATR': ['AMRITSAR', 'ASR '],
     'PNE': ['PUNE', 'POONA'],
-    'LKO': ['LUCKNOW', 'CHARBAGH'],
+    'LKO': ['LUCKNOW', 'CHARBAGH', 'LKO '],
     'PAT': ['PATNA', 'PNBE'],
-    'AHM': ['AHMEDABAD', 'ADI'],
-    'NGP': ['NAGPUR', 'NGP'],
-    'BPL': ['BHOPAL', 'BPL'],
+    'AHM': ['AHMEDABAD', 'ADI '],
+    'AMD': ['AHMEDABAD', 'ADI '],
+    'NGP': ['NAGPUR', 'NGP '],
+    'NAG': ['NAGPUR', 'NGP '],
+    'BPL': ['BHOPAL', 'BPL '],
+    'BHO': ['BHOPAL', 'BPL '],
     'IDR': ['INDORE', 'INDB'],
-    'JPR': ['JODHPUR', 'JU'],
+    'JPR': ['JODHPUR', 'JU '],
+    'JDH': ['JODHPUR', 'JU '],
     'UDR': ['UDAIPUR', 'UDZ'],
-    'JMU': ['JAMMU', 'JAT'],
+    'JMU': ['JAMMU', 'JAT '],
     'SRI': ['SRINAGAR'],
     'SHL': ['SHILLONG'],
-    'GUW': ['GUWAHATI', 'GHY'],
-    'RNC': ['RANCHI', 'RNC'],
-    'TVC': ['TRIVANDRUM', 'THIRUVANANTHAPURAM', 'TVC'],
-    'MYS': ['MYSORE', 'MYSURU', 'MYS'],
-    // Aliases for new city IATA codes
+    'GUW': ['GUWAHATI', 'GHY '],
+    'GAU': ['GUWAHATI', 'GHY '],
+    'RNC': ['RANCHI', 'RNC '],
+    'TVC': ['TRIVANDRUM', 'THIRUVANANTHAPURAM', 'TVC '],
+    'MYS': ['MYSORE', 'MYSURU', 'MYS '],
+    'MYQ': ['MYSORE', 'MYSURU', 'MYS '],
     'PNQ': ['PUNE', 'POONA'],
-    'AMD': ['AHMEDABAD', 'ADI'],
-    'NAG': ['NAGPUR', 'NGP'],
-    'BHO': ['BHOPAL', 'BPL'],
-    'JDH': ['JODHPUR', 'JU'],
-    'GAU': ['GUWAHATI', 'GHY'],
-    'MYQ': ['MYSORE', 'MYSURU', 'MYS'],
     'VTZ': ['VISAKHAPATNAM', 'VIZAG', 'WALTAIR', 'VSKP'],
-    'JSA': ['JAISALMER', 'JSM'],
-    'CJB': ['COIMBATORE', 'CBE'],
-    'IXC': ['CHANDIGARH', 'CDG'],
-    'BBI': ['BHUBANESWAR', 'BBS']
+    'JSA': ['JAISALMER', 'JSM '],
+    'CJB': ['COIMBATORE', 'CBE '],
+    'IXC': ['CHANDIGARH', 'CDG '],
+    'BBI': ['BHUBANESWAR', 'BBS '],
+    'IXB': ['DARJEELING', 'NEW JALPAIGURI', 'NJP ', 'SILIGURI'],
+    'SHL': ['SHILLONG', 'GUWAHATI', 'GHY '],
+    'IXU': ['AURANGABAD'],
+    'IXR': ['RANCHI', 'RNC '],
+    'RPR': ['RAIPUR', 'R '],
+    'STV': ['SURAT', 'ST '],
+    'BDQ': ['VADODARA', 'BARODA', 'BRC '],
+    'RAJ': ['RAJKOT', 'RJT '],
+    'VDY': ['VIJAYAWADA', 'BZA '],
+    'TRV': ['TIRUVANANTHAPURAM', 'TVC ', 'TRIVANDRUM'],
+    'MDU': ['MADURAI', 'MDU '],
+    'TRZ': ['TIRUCHIRAPALLI', 'TIRUCHIRAPPALLI', 'TPJ '],
+    'VGA': ['VIJAYAWADA', 'BZA ']
   };
 
   // Get search keywords for source and destination
@@ -788,10 +829,17 @@ const searchTrains = (params) => {
   console.log(`   Travel day: ${travelDayName}`);
 
   // Helper to check if station name contains any keyword
+  // Station names in EXP-TRAINS.json are in "STATION NAME - CODE" format
   const stationMatchesCity = (stationName, keywords) => {
     if (!stationName) return false;
     const upperStation = stationName.toUpperCase();
-    return keywords.some(keyword => upperStation.includes(keyword));
+    // Extract station code (after " - ")
+    const codePart = upperStation.split(' - ')[1]?.trim() || '';
+    const namePart = upperStation.split(' - ')[0]?.trim() || upperStation;
+    return keywords.some(keyword => {
+      const kw = keyword.trim();
+      return upperStation.includes(kw) || codePart === kw || namePart === kw;
+    });
   };
 
   // Helper to parse time string "HH:MM" to minutes from midnight
@@ -875,14 +923,18 @@ const searchTrains = (params) => {
 
     // Determine train type from name
     const trainName = train.trainName || '';
+    const trainNameUpper = trainName.toUpperCase();
     let trainType = 'EXP';
-    if (trainName.toUpperCase().includes('RAJDHANI') || trainName.includes('RAJ')) trainType = 'RAJ';
-    else if (trainName.toUpperCase().includes('SHATABDI') || trainName.includes('SHA')) trainType = 'SHA';
-    else if (trainName.toUpperCase().includes('VANDE') || trainName.includes('VAN')) trainType = 'VAN';
-    else if (trainName.toUpperCase().includes('DURONTO') || trainName.includes('DUR')) trainType = 'DUR';
-    else if (trainName.toUpperCase().includes('GARIB')) trainType = 'GAR';
-    else if (trainName.toUpperCase().includes('SUPERFAST') || trainName.includes('SF')) trainType = 'SF';
-    else if (trainName.toUpperCase().includes('SPL')) trainType = 'SPL';
+    if (trainNameUpper.includes('RAJDHANI')) trainType = 'RAJ';
+    else if (trainNameUpper.includes('SHATABDI')) trainType = 'SHA';
+    else if (trainNameUpper.includes('VANDE BHARAT') || trainNameUpper.includes('VANDEBHARAT')) trainType = 'VAN';
+    else if (trainNameUpper.includes('DURONTO')) trainType = 'DUR';
+    else if (trainNameUpper.includes('GARIB RATH')) trainType = 'GAR';
+    else if (trainNameUpper.includes('TEJAS')) trainType = 'VAN';
+    else if (trainNameUpper.includes('HUMSAFAR')) trainType = 'SF';
+    else if (trainNameUpper.includes('SUPERFAST') || trainNameUpper.includes('S F EXP') || /\bSF\b/.test(trainNameUpper)) trainType = 'SF';
+    else if (trainNameUpper.includes('SPL') || trainNameUpper.includes('SPECIAL')) trainType = 'SPL';
+    else if (trainNameUpper.includes('PASSENGER') || trainNameUpper.includes('PASS ')) trainType = 'PASS';
 
     // Determine available classes based on train type
     let availableClasses = ['3A', 'SL', '2S'];
@@ -938,7 +990,7 @@ const searchTrains = (params) => {
 
   // Generate availability for each matching train
   const results = uniqueTrains
-    .slice(0, 20) // Limit to 20 results
+    .slice(0, 30) // Limit to 30 results
     .map(train => generateTrainAvailability(train, date, travelClass))
     .filter(result => result !== null);
 

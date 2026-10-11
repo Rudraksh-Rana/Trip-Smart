@@ -1,11 +1,29 @@
+import os
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
+
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
 
 from recommender import rank_alternatives, rank_recommendations
 from price_forecaster import forecast_price
 from budget_allocator import allocate_budget, record_feedback
 
 app = FastAPI(title="TripSmart Recommendation Service", version="0.1.0")
+
+# CORS configuration
+allowed_origins = os.getenv("ALLOWED_ORIGINS", "*").split(",")
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=allowed_origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 class RecommendationRequest(BaseModel):
