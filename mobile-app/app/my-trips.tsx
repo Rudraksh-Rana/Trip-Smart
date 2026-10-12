@@ -1,67 +1,119 @@
 import React from 'react';
-import { View, Text, ScrollView, TouchableOpacity, ImageBackground } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import {
+  View, Text, ScrollView, TouchableOpacity, SafeAreaView
+} from 'react-native';
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import { tripStore } from '../src/store/tripStore';
+import { formatINR } from '../src/services/api';
 
 export default function MyTripsScreen() {
   const router = useRouter();
+  const savedTrips = tripStore.getSavedTrips();
+
+  const handleOpenTrip = (saved: any) => {
+    tripStore.setSelectedPlan(saved.plan);
+    tripStore.setSearchParams(saved.params);
+    router.push('/trip-details');
+  };
 
   return (
-    <SafeAreaView className="flex-1 bg-background" edges={['top', 'bottom']}>
-      <StatusBar style="dark" />
-      <View className="px-5 pt-4 pb-2 flex-row items-center justify-between border-b border-surface-variant">
-        <TouchableOpacity onPress={() => router.back()} className="w-10 h-10 -ml-2 items-center justify-center">
-          <Text className="text-azure-blue font-label-md">←</Text>
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#012015' }}>
+      <StatusBar style="light" />
+
+      {/* Header */}
+      <View style={{
+        paddingHorizontal: 20, paddingVertical: 14,
+        flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+        borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.08)'
+      }}>
+        <TouchableOpacity
+          onPress={() => router.back()}
+          style={{ paddingVertical: 6, paddingHorizontal: 12, borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.08)' }}
+        >
+          <Text style={{ color: '#50C878', fontWeight: 'bold', fontSize: 13 }}>← Back</Text>
         </TouchableOpacity>
-        <Text className="font-headline-md text-xl text-on-background">My Trips</Text>
-        <View className="w-10 h-10" />
+        <Text style={{ color: '#ffffff', fontSize: 18, fontWeight: 'bold' }}>My Trips</Text>
+        <TouchableOpacity
+          onPress={() => router.push('/plan-trip')}
+          style={{ paddingVertical: 6, paddingHorizontal: 12, borderRadius: 20, backgroundColor: '#50C878' }}
+        >
+          <Text style={{ color: '#012015', fontWeight: 'bold', fontSize: 12 }}>+ New</Text>
+        </TouchableOpacity>
       </View>
 
-      <View className="px-5 py-4">
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} className="flex-row">
-          <TouchableOpacity className="h-10 px-6 rounded-full bg-primary items-center justify-center mr-3">
-            <Text className="text-on-primary font-label-md">Upcoming</Text>
-          </TouchableOpacity>
-          <TouchableOpacity className="h-10 px-6 rounded-full bg-azure-blue/10 items-center justify-center mr-3">
-            <Text className="text-azure-blue font-label-md">Past</Text>
-          </TouchableOpacity>
-          <TouchableOpacity className="h-10 px-6 rounded-full bg-azure-blue/10 items-center justify-center mr-3">
-            <Text className="text-azure-blue font-label-md">Saved Drafts</Text>
-          </TouchableOpacity>
-        </ScrollView>
-      </View>
-
-      <ScrollView className="flex-1 px-5 pt-2" showsVerticalScrollIndicator={false}>
-        <View className="gap-6 pb-12">
-          
-          <TouchableOpacity 
-            activeOpacity={0.9}
-            onPress={() => router.push('/trip-details')}
-            className="w-full bg-champagne-highlight rounded-xl shadow-md overflow-hidden border border-outline-variant/30"
-          >
-            <ImageBackground 
-              source={{ uri: 'https://lh3.googleusercontent.com/aida-public/AB6AXuB_Tjypzu4zBpHFik4_uBaz_qX-wtq8Mjslv0OIbLadXkIaRyioa6yH-UiXV0_fVp0FSPFJ-huGAmxnYL2zgEYtR9zHgmbfwtabF-IErrW377xzKKa8lpZD0sMYe2vZyZL7inzRM7v8hdDCjm6ieuAonmRifWJ1GIxrQffJ9tLDosmc855DXvN4F3VkEa9V16eILudNPP5CLAdc5TIc7nxQAYJOeluYTjNl3CGcmec9Y5C3zhJp_H1A' }}
-              className="w-full h-32 bg-surface-container-high justify-end p-4"
+      <ScrollView style={{ flex: 1, paddingHorizontal: 20 }} contentContainerStyle={{ paddingVertical: 20 }}>
+        {savedTrips.length === 0 ? (
+          <View style={{
+            alignItems: 'center', justifyContent: 'center',
+            paddingVertical: 80, paddingHorizontal: 20,
+            borderRadius: 24, backgroundColor: 'rgba(255,255,255,0.03)',
+            borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)',
+          }}>
+            <Text style={{ fontSize: 42, marginBottom: 14 }}>🗺️</Text>
+            <Text style={{ color: '#ffffff', fontSize: 18, fontWeight: 'bold', marginBottom: 6 }}>
+              No Saved Trips Yet
+            </Text>
+            <Text style={{ color: 'rgba(209,242,235,0.6)', fontSize: 13, textAlign: 'center', marginBottom: 20 }}>
+              Use the Trip Planner to generate an itinerary and tap "Save to Library".
+            </Text>
+            <TouchableOpacity
+              onPress={() => router.push('/plan-trip')}
+              style={{
+                paddingHorizontal: 24, paddingVertical: 12,
+                borderRadius: 16, backgroundColor: '#50C878',
+              }}
             >
-              <View className="absolute inset-0 bg-black/30" />
-              <View className="flex-row items-center gap-2 mb-1">
-                <Text className="font-headline-md text-xl text-white">Goa Bound</Text>
-              </View>
-              <Text className="font-label-sm text-white/90">2026-09-08 • 10 Days</Text>
-            </ImageBackground>
-            <View className="p-4 flex-row justify-between items-center">
-              <View>
-                <Text className="font-body-md text-sm text-on-surface-variant">Mumbai → Goa</Text>
-                <Text className="font-label-md text-primary mt-1">₹24,920</Text>
-              </View>
-              <TouchableOpacity className="px-4 py-2 bg-azure-blue/10 rounded-full">
-                <Text className="text-azure-blue font-label-sm">View Details</Text>
-              </TouchableOpacity>
-            </View>
-          </TouchableOpacity>
+              <Text style={{ color: '#012015', fontWeight: 'bold', fontSize: 14 }}>
+                Start Planning
+              </Text>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <View style={{ gap: 14 }}>
+            {savedTrips.map((item) => (
+              <TouchableOpacity
+                key={item.id}
+                activeOpacity={0.85}
+                onPress={() => handleOpenTrip(item)}
+                style={{
+                  borderRadius: 20,
+                  backgroundColor: 'rgba(1, 40, 26, 0.8)',
+                  borderWidth: 1,
+                  borderColor: 'rgba(80, 200, 120, 0.25)',
+                  padding: 18,
+                }}
+              >
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                  <View>
+                    <Text style={{ color: '#50C878', fontSize: 11, fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: 1 }}>
+                      {item.params.origin} → {item.params.destination}
+                    </Text>
+                    <Text style={{ color: '#ffffff', fontSize: 18, fontWeight: 'bold', marginTop: 2 }}>
+                      {item.plan.name}
+                    </Text>
+                    <Text style={{ color: 'rgba(209,242,235,0.6)', fontSize: 12, marginTop: 2 }}>
+                      Saved on {item.savedAt} • {item.plan.duration}
+                    </Text>
+                  </View>
 
-        </View>
+                  <Text style={{ color: '#50C878', fontSize: 18, fontWeight: '900' }}>
+                    {formatINR(item.plan.totalCost)}
+                  </Text>
+                </View>
+
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 14, paddingTop: 12, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.06)' }}>
+                  <Text style={{ color: 'rgba(209,242,235,0.6)', fontSize: 12 }}>
+                    {item.plan.itinerary.length} Days Schedule
+                  </Text>
+                  <Text style={{ color: '#50C878', fontSize: 12, fontWeight: 'bold' }}>
+                    Open Itinerary →
+                  </Text>
+                </View>
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
       </ScrollView>
     </SafeAreaView>
   );

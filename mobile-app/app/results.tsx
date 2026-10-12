@@ -1,139 +1,177 @@
-import React from 'react';
-import { View, Text, ScrollView, ImageBackground, TouchableOpacity } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import React, { useState } from 'react';
+import {
+  View, Text, ScrollView, TouchableOpacity, SafeAreaView
+} from 'react-native';
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import { tripStore } from '../src/store/tripStore';
+import { formatINR, MobileTripPlan } from '../src/services/api';
 
 export default function ResultsScreen() {
   const router = useRouter();
+  const params = tripStore.getSearchParams();
+  const allPlans = tripStore.getPlans();
+  const [filter, setFilter] = useState<'all' | 'budget' | 'comfort'>('all');
+
+  const filteredPlans = allPlans.filter(p => {
+    if (filter === 'budget') return p.tier.toLowerCase().includes('budget');
+    if (filter === 'comfort') return p.tier.toLowerCase().includes('comfort') || p.tier.toLowerCase().includes('premium');
+    return true;
+  });
+
+  const handleSelectPlan = (plan: MobileTripPlan) => {
+    tripStore.setSelectedPlan(plan);
+    router.push('/trip-details');
+  };
 
   return (
-    <SafeAreaView className="flex-1 bg-background" edges={['top']}>
-      <StatusBar style="dark" />
-      
-      {/* Header */}
-      <View className="px-5 pt-6 pb-4 gap-1">
-        <View className="flex-row items-center justify-between">
-          <TouchableOpacity onPress={() => router.back()} className="w-10 h-10 -ml-2 items-center justify-center">
-            <Text className="text-azure-blue font-label-md">←</Text>
-          </TouchableOpacity>
-        </View>
-        <Text className="font-headline-lg-mobile text-[28px] text-primary">Your Trip Options Are Ready</Text>
-        <View className="flex-row items-center gap-2 mt-1">
-          <Text className="text-on-surface-variant font-label-md">New York</Text>
-          <Text className="text-on-surface-variant font-label-md">→</Text>
-          <Text className="text-on-surface-variant font-label-md">Paris</Text>
-        </View>
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#012015' }}>
+      <StatusBar style="light" />
+
+      {/* Top Header */}
+      <View style={{ paddingHorizontal: 20, paddingTop: 14, paddingBottom: 10 }}>
+        <TouchableOpacity
+          onPress={() => router.back()}
+          style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.08)', alignItems: 'center', justifyContent: 'center', marginBottom: 12 }}
+        >
+          <Text style={{ color: '#50C878', fontSize: 16, fontWeight: 'bold' }}>←</Text>
+        </TouchableOpacity>
+
+        <Text style={{ color: '#D1F2EB', fontSize: 26, fontWeight: 'bold', lineHeight: 32 }}>
+          Synthesized Expeditions
+        </Text>
+        <Text style={{ color: 'rgba(209,242,235,0.7)', fontSize: 13, marginTop: 4 }}>
+          {params.origin} → {params.destination} • {params.travelers} Traveler{params.travelers > 1 ? 's' : ''}
+        </Text>
       </View>
 
-      {/* Quick Filters */}
-      <View className="w-full px-5 py-4">
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} className="flex-row overflow-visible">
-          <TouchableOpacity className="h-10 px-6 rounded-full bg-primary items-center justify-center mr-3 shadow-md">
-            <Text className="text-on-primary font-label-md">Recommended</Text>
-          </TouchableOpacity>
-          <TouchableOpacity className="h-10 px-6 rounded-full bg-azure-blue/10 items-center justify-center mr-3">
-            <Text className="text-azure-blue font-label-md">Cheapest</Text>
-          </TouchableOpacity>
-          <TouchableOpacity className="h-10 px-6 rounded-full bg-azure-blue/10 items-center justify-center mr-3">
-            <Text className="text-azure-blue font-label-md">Fastest</Text>
-          </TouchableOpacity>
+      {/* Quick Filter Tabs */}
+      <View style={{ paddingHorizontal: 20, paddingVertical: 12 }}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ flexDirection: 'row' }}>
+          {[
+            { id: 'all', label: 'All Options' },
+            { id: 'budget', label: 'Budget-Focused' },
+            { id: 'comfort', label: 'Comfort & Premium' },
+          ].map(f => (
+            <TouchableOpacity
+              key={f.id}
+              onPress={() => setFilter(f.id as any)}
+              style={{
+                paddingHorizontal: 16,
+                paddingVertical: 8,
+                borderRadius: 20,
+                backgroundColor: filter === f.id ? '#50C878' : 'rgba(255,255,255,0.08)',
+                marginRight: 8,
+              }}
+            >
+              <Text style={{ fontSize: 12, fontWeight: 'bold', color: filter === f.id ? '#012015' : 'rgba(255,255,255,0.8)' }}>
+                {f.label}
+              </Text>
+            </TouchableOpacity>
+          ))}
         </ScrollView>
       </View>
 
-      {/* Results List */}
-      <ScrollView className="flex-1 px-5" showsVerticalScrollIndicator={false}>
-        <View className="gap-6 pb-12">
-          
-          {/* Option 1 */}
-          <TouchableOpacity 
-            activeOpacity={0.9}
-            onPress={() => router.push('/trip-details')}
-            className="w-full bg-champagne-highlight rounded-xl shadow-lg overflow-hidden border border-outline-variant/30"
-          >
-            <ImageBackground 
-              source={{ uri: 'https://lh3.googleusercontent.com/aida-public/AB6AXuB9Y-4dtdcMyS4VnEWqqyjIKZXef12tBt35EzfC_PyjpnIHafbniXvSZXbb0AIUt7hmUYE2S4pVfJ4ngla5FWIPDJoVuYDAPkVSEFMpIYiHqgUlLz3wYtE-EePLkHW8dddwdK3AIIaycAryp65cEeHHB6QzM78I8yRVbGXTE2FWd3CN4vvA57ZQNp4bk6KvkAygjgePnXAvabwFjMMOUj-2xoAk8xzSoc_ILK9jlBBnDFAI6jBeyFzw' }}
-              className="w-full h-32 bg-surface-container-high"
-            >
-              <View className="absolute top-3 left-3 bg-champagne-highlight/90 px-3 py-1 rounded-full flex-row items-center gap-1 shadow-sm">
-                <Text className="text-sunset-orange text-xs font-bold">★</Text>
-                <Text className="font-label-sm text-primary">Top Pick</Text>
-              </View>
-            </ImageBackground>
+      {/* Plans List */}
+      <ScrollView style={{ flex: 1, paddingHorizontal: 20 }} contentContainerStyle={{ paddingBottom: 30 }}>
+        <View style={{ gap: 16 }}>
+          {filteredPlans.map((plan) => {
+            const isTrain = plan.transport.mode === 'train';
 
-            <View className="p-4 gap-3">
-              <View className="flex-row justify-between items-start">
-                <View>
-                  <Text className="font-headline-md text-xl text-primary">Direct Flight + Hotel</Text>
-                  <Text className="font-body-md text-on-surface-variant text-sm">Comfort Choice</Text>
-                </View>
-                <View className="items-end">
-                  <Text className="font-headline-md text-xl text-sunset-orange">$2,450</Text>
-                  <Text className="font-label-sm text-on-surface-variant">per person</Text>
-                </View>
-              </View>
-
-              <View className="flex-row items-center gap-4 mt-1">
-                <Text className="text-primary font-label-sm">✈️ 7h 30m</Text>
-                <Text className="text-primary font-label-sm">🏨 4 Nights</Text>
-              </View>
-
-              <View className="w-full h-[1px] bg-outline-variant/30 my-1" />
-
-              <View className="flex-row justify-between items-center mt-1">
-                <View className="flex-row gap-2">
-                  <View className="px-2 py-1 bg-azure-blue/10 rounded-full">
-                    <Text className="font-label-sm text-azure-blue text-[10px] uppercase tracking-wider">Direct</Text>
+            return (
+              <TouchableOpacity
+                key={plan.id}
+                activeOpacity={0.88}
+                onPress={() => handleSelectPlan(plan)}
+                style={{
+                  borderRadius: 22,
+                  backgroundColor: 'rgba(1, 40, 26, 0.75)',
+                  borderWidth: 1,
+                  borderColor: 'rgba(80, 200, 120, 0.25)',
+                  padding: 20,
+                  shadowColor: '#000',
+                  shadowOpacity: 0.3,
+                  shadowRadius: 12,
+                }}
+              >
+                {/* Tier & Price Header */}
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
+                  <View>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                      <Text style={{
+                        paddingHorizontal: 10,
+                        paddingVertical: 3,
+                        borderRadius: 10,
+                        backgroundColor: 'rgba(80,200,120,0.2)',
+                        color: '#50C878',
+                        fontSize: 11,
+                        fontWeight: 'bold',
+                        textTransform: 'uppercase',
+                      }}>
+                        {plan.tier}
+                      </Text>
+                      <Text style={{ color: 'rgba(209,242,235,0.6)', fontSize: 12 }}>{plan.duration}</Text>
+                    </View>
+                    <Text style={{ color: '#ffffff', fontSize: 18, fontWeight: 'bold' }}>
+                      {plan.name}
+                    </Text>
                   </View>
-                  <View className="px-2 py-1 bg-azure-blue/10 rounded-full">
-                    <Text className="font-label-sm text-azure-blue text-[10px] uppercase tracking-wider">Breakfast</Text>
-                  </View>
-                </View>
-                <Text className="text-sunset-orange font-label-md">View Details →</Text>
-              </View>
-            </View>
-          </TouchableOpacity>
 
-          {/* Option 2 */}
-          <TouchableOpacity 
-            activeOpacity={0.9}
-            onPress={() => router.push('/trip-details')}
-            className="w-full bg-champagne-highlight rounded-xl shadow-md overflow-hidden border border-outline-variant/30"
-          >
-            <ImageBackground 
-              source={{ uri: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAXNjR1rFxOmgQJW8CGguzEIkWjCuBhoTadbXJDhAXOrZeC6GHUDcTSMl16DcT6rgm8RI-tTNyhH_JnlqTRubIdQEL_gKV7f9h6H5MWc_HYo0PEhbRZpR88vCVrPZhr8kqeilv-dn1LtNO-ZQf3PmOE2XBsgC8vaCjWJzkkGUvH6E0zalhawPV7CCB6UhXGLZxE7k9IryXNRehPqt4mfUf0iMWRsdSxWL8Ia8xOoXO8ojWDrjRjlSJP' }}
-              className="w-full h-32 bg-surface-container-high"
-            />
-            <View className="p-4 gap-3">
-              <View className="flex-row justify-between items-start">
-                <View>
-                  <Text className="font-headline-md text-xl text-primary">1-Stop Flight + Airbnb</Text>
-                  <Text className="font-body-md text-on-surface-variant text-sm">Budget Saver</Text>
-                </View>
-                <View className="items-end">
-                  <Text className="font-headline-md text-xl text-primary">$1,850</Text>
-                  <Text className="font-label-sm text-on-surface-variant">per person</Text>
-                </View>
-              </View>
-
-              <View className="flex-row items-center gap-4 mt-1">
-                <Text className="text-primary font-label-sm">✈️ 11h 45m</Text>
-                <Text className="text-primary font-label-sm">🏠 4 Nights</Text>
-              </View>
-
-              <View className="w-full h-[1px] bg-outline-variant/30 my-1" />
-
-              <View className="flex-row justify-between items-center mt-1">
-                <View className="flex-row gap-2">
-                  <View className="px-2 py-1 bg-azure-blue/10 rounded-full">
-                    <Text className="font-label-sm text-azure-blue text-[10px] uppercase tracking-wider">Kitchen</Text>
+                  <View style={{ alignItems: 'flex-end' }}>
+                    <Text style={{ color: '#50C878', fontSize: 22, fontWeight: '900' }}>
+                      {formatINR(plan.totalCost)}
+                    </Text>
+                    <Text style={{ color: 'rgba(209,242,235,0.5)', fontSize: 10 }}>Total trip cost</Text>
                   </View>
                 </View>
-                <Text className="text-sunset-orange font-label-md">View Details →</Text>
-              </View>
-            </View>
-          </TouchableOpacity>
 
+                {/* Key Logistics */}
+                <View style={{ paddingVertical: 12, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.08)', borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.08)', gap: 8 }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                    <Text style={{ fontSize: 15 }}>{isTrain ? '🚂' : '✈️'}</Text>
+                    <Text style={{ color: 'rgba(255,255,255,0.9)', fontSize: 13, flex: 1 }} numberOfLines={1}>
+                      {plan.transport.name} ({plan.transport.duration})
+                    </Text>
+                  </View>
+
+                  {plan.accommodation && (
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                      <Text style={{ fontSize: 15 }}>🏨</Text>
+                      <Text style={{ color: 'rgba(255,255,255,0.9)', fontSize: 13, flex: 1 }} numberOfLines={1}>
+                        {plan.accommodation.name} ({'★'.repeat(plan.accommodation.stars)})
+                      </Text>
+                    </View>
+                  )}
+                </View>
+
+                {/* Highlights */}
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 12, marginBottom: 14 }}>
+                  {plan.highlights.map((h, i) => (
+                    <Text key={i} style={{
+                      paddingHorizontal: 8,
+                      paddingVertical: 3,
+                      borderRadius: 8,
+                      backgroundColor: 'rgba(255,255,255,0.06)',
+                      color: 'rgba(209,242,235,0.8)',
+                      fontSize: 11,
+                    }}>
+                      • {h}
+                    </Text>
+                  ))}
+                </View>
+
+                {/* CTA */}
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <Text style={{ color: 'rgba(209,242,235,0.5)', fontSize: 11 }}>
+                    {plan.itinerary.length} Days Itinerary Included
+                  </Text>
+                  <Text style={{ color: '#50C878', fontSize: 13, fontWeight: 'bold' }}>
+                    View Full Details →
+                  </Text>
+                </View>
+              </TouchableOpacity>
+            );
+          })}
         </View>
       </ScrollView>
     </SafeAreaView>

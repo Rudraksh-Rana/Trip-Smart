@@ -69,6 +69,8 @@ function AppRoutes() {
       <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
       <Route path="/saved-trips" element={<ProtectedRoute><MyTripsPage /></ProtectedRoute>} />
       <Route path="/saved-trips/:id" element={<ProtectedRoute><SavedTripDetailPage /></ProtectedRoute>} />
+      <Route path="/saved%20trips/:id" element={<ProtectedRoute><SavedTripDetailPage /></ProtectedRoute>} />
+      <Route path="/saved/trips/:id" element={<ProtectedRoute><SavedTripDetailPage /></ProtectedRoute>} />
       <Route path="/tickets/:id" element={<ProtectedRoute><TicketPage /></ProtectedRoute>} />
       <Route path="/group-trip" element={<GroupTripInfoPage />} />
       <Route path="/my-trips" element={<Navigate to="/saved-trips" replace />} />
